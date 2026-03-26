@@ -6,14 +6,24 @@
         "name": "next"
       }
     ],
-    "strictNullChecks": true
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@repo/shared-types": [
+        "../../packages/shared-types/src/index.ts"
+      ]
+    }
   },
   "include": [
+    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "next-env.d.ts",
-    "next.config.js",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }
