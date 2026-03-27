@@ -1,102 +1,333 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
+import {
+  Truck,
+  Droplets,
+  Shield,
+  Ambulance,
+  Flame,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+} from "lucide-react";
+import type { AnalyticsStat } from "@repo/shared-types";
+import { KPICard } from "@/components/dashboard/KPICard";
+import { LiveFeed } from "@/components/dashboard/LiveFeed";
+import {
+  MOCK_KPI_STATS,
+  MOCK_VEHICLES,
+  MOCK_INCIDENTS,
+  MOCK_AI_ALERTS,
+} from "@/lib/mockData";
+import { clsx } from "clsx";
+
+const VEHICLE_TYPE_META = {
+  garbage_truck: {
+    Icon: Truck,
+    label: "Garbage Trucks",
+    color: "text-city-amber",
+  },
+  water_tanker: {
+    Icon: Droplets,
+    label: "Water Tankers",
+    color: "text-city-cyan",
+  },
+  police_patrol: {
+    Icon: Shield,
+    label: "Police Patrols",
+    color: "text-city-indigo",
+  },
+  ambulance: { Icon: Ambulance, label: "Ambulances", color: "text-city-rose" },
+  fire_truck: { Icon: Flame, label: "Fire Engines", color: "text-city-rose" },
 };
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
+const KPI_ICONS = [
+  <Truck key="t" className="w-4 h-4" />,
+  <Shield key="s" className="w-4 h-4" />,
+  <Ambulance key="a" className="w-4 h-4" />,
+  <TrendingUp key="tu" className="w-4 h-4" />,
+  <Flame key="f" className="w-4 h-4" />,
+  <Droplets key="d" className="w-4 h-4" />,
+];
 
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
+const KPI_COLORS = [
+  "cyan",
+  "rose",
+  "amber",
+  "emerald",
+  "indigo",
+  "emerald",
+] as const;
+const KPI_UNITS = ["", "", " min", "", "", "%"];
+
+const STATUS_DOT: Record<string, string> = {
+  active: "bg-city-emerald",
+  idle: "bg-city-amber",
+  offline: "bg-city-muted",
+  emergency: "bg-city-rose animate-pulse",
+  maintenance: "bg-city-indigo",
+};
+
+const ALERT_COLORS = {
+  bottleneck: "text-city-amber border-city-amber/20 bg-city-amber/5",
+  anomaly: "text-city-rose border-city-rose/20 bg-city-rose/5",
+  delay: "text-city-amber border-city-amber/20 bg-city-amber/5",
+  route_suggestion:
+    "text-city-emerald border-city-emerald/20 bg-city-emerald/5",
+};
+
+export default function DashboardPage() {
+  // Compute fleet summary
+  const fleetSummary = Object.entries(VEHICLE_TYPE_META).map(
+    ([type, meta]) => ({
+      ...meta,
+      count: MOCK_VEHICLES.filter((v) => v.type === type).length,
+      active: MOCK_VEHICLES.filter(
+        (v) => v.type === type && v.status === "active",
+      ).length,
+    }),
   );
-};
 
-export default function Home() {
+  const recentIncidents = MOCK_INCIDENTS.slice(0, 5);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.dev/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-100">
+            Good afternoon, <span className="gradient-text">Admin</span> 👋
+          </h2>
+          <p className="text-sm text-city-muted mt-0.5">
+            Here's your city overview for today
+          </p>
         </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        <div className="flex items-center gap-2">
+          <span className="badge badge-emerald">● System Normal</span>
+          <span className="text-xs text-city-muted">
+            {new Date().toLocaleDateString("en-IN", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </span>
+        </div>
+      </div>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        {MOCK_KPI_STATS.map((stat, i) => (
+          <KPICard
+            key={stat.label}
+            stat={stat}
+            unit={KPI_UNITS[i]}
+            icon={KPI_ICONS[i]}
+            color={KPI_COLORS[i]}
           />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.dev?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.dev →
-        </a>
-      </footer>
+        ))}
+      </div>
+
+      {/* Middle Row: Fleet Summary + Incidents + Live Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[340px]">
+        {/* Fleet Summary */}
+        <div className="glass-card p-4 flex flex-col">
+          <h3 className="text-sm font-semibold text-slate-200 mb-3">
+            Fleet Summary
+          </h3>
+          <div className="space-y-2 flex-1 overflow-auto hide-scrollbar">
+            {fleetSummary.map(({ Icon, label, color, count, active }) => (
+              <div
+                key={label}
+                className="flex items-center justify-between p-2.5 rounded-lg bg-city-surface/40 hover:bg-city-surface/60 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-md bg-city-bg border border-city-border">
+                    <Icon className={clsx("w-3.5 h-3.5", color)} />
+                  </div>
+                  <span className="text-sm text-slate-300">{label}</span>
+                </div>
+                <div className="text-right">
+                  <p className={clsx("text-sm font-bold", color)}>{count}</p>
+                  <p className="text-[10px] text-city-muted">{active} active</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Incidents */}
+        <div className="glass-card flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-city-border/60">
+            <span className="text-sm font-semibold text-slate-200">
+              Recent Incidents
+            </span>
+            <a
+              href="/incidents"
+              className="text-xs text-city-cyan hover:text-cyan-300 transition-colors"
+            >
+              View all →
+            </a>
+          </div>
+          <div className="flex-1 overflow-y-auto hide-scrollbar">
+            {recentIncidents.map((inc) => (
+              <div
+                key={inc.id}
+                className="flex items-start gap-3 px-4 py-2.5 border-b border-city-border/40 hover:bg-city-surface/40 transition-colors cursor-pointer"
+              >
+                <span
+                  className={clsx("status-dot mt-1.5 flex-shrink-0", {
+                    "bg-city-rose": inc.severity === "critical",
+                    "bg-city-amber": inc.severity === "high",
+                    "bg-city-indigo": inc.severity === "medium",
+                    "bg-city-muted": inc.severity === "low",
+                  })}
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-200 truncate">
+                    {inc.title}
+                  </p>
+                  <p className="text-[10px] text-city-muted">
+                    {inc.address ?? inc.category} ·{" "}
+                    {inc.status.replace("_", " ")}
+                  </p>
+                </div>
+                <span
+                  className={clsx("badge flex-shrink-0 text-[10px]", {
+                    "badge-rose": inc.severity === "critical",
+                    "badge-amber": inc.severity === "high",
+                    "badge-indigo": inc.severity === "medium",
+                    "badge-muted": inc.severity === "low",
+                  })}
+                >
+                  {inc.severity}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Feed */}
+        <LiveFeed />
+      </div>
+
+      {/* Bottom Row: AI Alerts + Active Vehicles */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* AI Alerts */}
+        <div className="glass-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1 rounded-md bg-city-indigo/10">
+              <TrendingUp className="w-3.5 h-3.5 text-city-indigo" />
+            </div>
+            <span className="text-sm font-semibold text-slate-200">
+              AI Predictions & Alerts
+            </span>
+            <span className="badge badge-indigo ml-auto">
+              {MOCK_AI_ALERTS.length} active
+            </span>
+          </div>
+          <div className="space-y-2">
+            {MOCK_AI_ALERTS.map((alert) => (
+              <div
+                key={alert.id}
+                className={clsx(
+                  "p-3 rounded-lg border text-xs",
+                  ALERT_COLORS[alert.type],
+                )}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <span className="font-medium capitalize">
+                    {alert.type.replace("_", " ")}
+                  </span>
+                  <span
+                    className={clsx("badge text-[10px]", {
+                      "badge-rose": alert.severity === "critical",
+                      "badge-amber": alert.severity === "high",
+                      "badge-indigo": alert.severity === "medium",
+                      "badge-muted": alert.severity === "low",
+                    })}
+                  >
+                    {alert.severity}
+                  </span>
+                </div>
+                <p className="text-slate-400 leading-snug">{alert.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Active Vehicles mini-table */}
+        <div className="glass-card overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-city-border/60">
+            <span className="text-sm font-semibold text-slate-200">
+              Active Vehicles
+            </span>
+            <a
+              href="/vehicles"
+              className="text-xs text-city-cyan hover:text-cyan-300 transition-colors"
+            >
+              Manage fleet →
+            </a>
+          </div>
+          <div className="overflow-auto hide-scrollbar max-h-[220px]">
+            <table className="city-table">
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Speed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_VEHICLES.filter((v) => v.status !== "offline").map(
+                  (v) => (
+                    <tr key={v.id} className="cursor-pointer">
+                      <td>
+                        <span className="font-medium text-slate-200 text-xs">
+                          {v.name}
+                        </span>
+                        <br />
+                        <span className="text-[10px] text-city-muted font-mono">
+                          {v.licensePlate}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-xs capitalize">
+                          {v.type.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={clsx("flex items-center gap-1.5 text-xs", {
+                            "text-city-emerald": v.status === "active",
+                            "text-city-amber": v.status === "idle",
+                            "text-city-rose": v.status === "emergency",
+                            "text-city-indigo": v.status === "maintenance",
+                            "text-city-muted": v.status === "offline",
+                          })}
+                        >
+                          <span
+                            className={clsx(
+                              "w-1.5 h-1.5 rounded-full",
+                              STATUS_DOT[v.status],
+                            )}
+                          />
+                          {v.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="font-mono text-xs text-city-muted">
+                          {v.location.speed ?? 0} km/h
+                        </span>
+                      </td>
+                    </tr>
+                  ),
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
